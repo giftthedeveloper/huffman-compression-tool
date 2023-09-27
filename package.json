@@ -5,11 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node src/huffman.ts"
+    "start": "ts-node src/main.ts"
   },
   "author": "Gift Jeremiah",
   "license": "ISC",
   "devDependencies": {
+    "@types/fs-extra": "^11.0.2",
     "@types/node": "^20.6.3"
+  },
+  "dependencies": {
+    "fs-extra": "^11.1.1"
   }
 }
