@@ -85,7 +85,8 @@ interface CodeTable {
   function WriteHeaderSection(outputFileName: string, codeTable: CodeTable): boolean {
     try {
       const headerData = JSON.stringify(codeTable);
-      const data = fs.writeFileSync(outputFileName, headerData + '\n'); 
+      console.log(headerData)
+      const data = fs.writeFileSync(outputFileName, headerData + '\n');
       return true;
     } catch (error) {
       console.error('Error writing header:', error);
@@ -114,14 +115,8 @@ interface CodeTable {
   
   
   function readCompressedText(inputFileName: string): string {
-    try {
-      const fileContent = fs.readFileSync(inputFileName, 'utf-8');
-      const parts = fileContent.trim().split('\n');
-      return parts.slice(1).join('');
-    } catch (error) {
-      console.error('Error reading compressed text:', error);
-      return '';
-    }
+    const buffer = fs.readFileSync(inputFileName);
+    return buffer.toString('binary');
   }
 
   function readHeader(inputFileName: string): CodeTable | null {
