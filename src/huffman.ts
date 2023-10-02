@@ -10,7 +10,7 @@ export function encodeAndCompress(inputFile: string) {
   const frequencyMap = countCharFrequency(filename);
   const root = buildTree(frequencyMap);
   const codeTable = generateCodeTable(root);
-  const outputFileName = `compressed-${filename}`
+  const outputFileName = `compressed-file.huff`
 
   const encodedData = encodeText(text, codeTable);
   
@@ -36,7 +36,7 @@ export function decompressAndDecode(inputFile: string) {
    
     const decodedText = decodeData(compressedData, root);
 
-    const outputFileName = 'decompressed-sample.txt';
+    const outputFileName = 'decompressed-file.txt';
     fs.writeFileSync(outputFileName, decodedText);
     console.log("Decompression successful!");
   } else {
