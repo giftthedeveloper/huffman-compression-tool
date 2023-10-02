@@ -16,7 +16,8 @@ This Command line tool project provides a simple implementation of Huffman encod
    ```
 
 ## Usage ( Compression & Decompression)
-To compress a file run the following command
+
+#### To compress a file run the following command
 
 ```
 npm run start compress <path to desired file>
@@ -29,7 +30,7 @@ You can also test it with my sample.txt present in the root directory of this pr
 ```
 
 
-To decompress a file run the following command
+#### To decompress a file run the following command
 
 ```
 npm run start decompress <path to compressed huf file>
@@ -52,5 +53,6 @@ You can test my sample.txt and compare the results of the original sample.txt wi
     tree.ts: Huffman tree and related data structures.
     package.json: Project dependencies and scripts.
     README.md: This documentation file.
+
 
 ### Thank you for using my tool!
