@@ -64,29 +64,33 @@ interface CodeTable {
       if (node.character) {
         codeTable[node.character] = currentCode;
       }
+      if (node.character === ' ') {
+        codeTable['SPACE'] = currentCode; // Add space character entry
+      }
       if (node.left) {
-        traverse(node.left, currentCode + '0'); 
+        traverse(node.left, currentCode + '0');
       }
       if (node.right) {
-        traverse(node.right, currentCode + '1'); 
+        traverse(node.right, currentCode + '1');
       }
     }
   
-    traverse(root, ''); 
+    traverse(root, '');
   
     return codeTable;
   }
+  
   
   //stores and jsonify character mappings information (for easy decoding and encoding) for decoding algorithm 
   function WriteHeaderSection(outputFileName: string, codeTable: CodeTable): boolean {
     try {
       const headerData = JSON.stringify(codeTable);
-      fs.writeFileSync(outputFileName, headerData);
+      console.log(headerData)
+      const data = fs.writeFileSync(outputFileName, headerData + '\n');
       return true;
-
     } catch (error) {
       console.error('Error writing header:', error);
-          return false;
+      return false;
     }
   }
   
@@ -94,43 +98,139 @@ interface CodeTable {
   function encodeText(text: string, codeTable: CodeTable): string {
     let encodedData = '';
     for (const char of text) {
-      encodedData += codeTable[char];
+      if (char === ' ') {
+        encodedData += codeTable['SPACE'];
+      } else {
+        encodedData += codeTable[char];
+      }
     }
     return encodedData;
   }
+  
   
   function writeCompressedText(outputFileName: string, encodedData: string) {
     fs.appendFileSync(outputFileName, encodedData);
   }
   
 
-//if the filename is not provided on the command line throw error
-if (process.argv.length < 3) {
-  console.error('Please provide a file path as a command-line argument.');
+  function readHeader(inputFileName: string): CodeTable | null {
+    try {
+      const fileContent = fs.readFileSync(inputFileName, 'utf-8');
+      const parts = fileContent.split('\n');
+      const headerData = parts[0];
+      const codeTable = JSON.parse(headerData);
+      return codeTable;
+    } catch (error) {
+      console.error('Error reading header:', error);
+      return null;
+    }
+  }
+
+  
+  function decodeData(encodedData: string, root: TreeNode, spaceSymbol: string): string {
+    let decodedText = '';
+    let currentNode = root;
+  
+    for (const bit of encodedData) {
+      console.log(`Bit: ${bit}, Current Node: ${currentNode.character}, Decoded Text: ${decodedText}`);
+      if (bit === '0' && currentNode.left) {
+        currentNode = currentNode.left;
+      } else if (bit === '1' && currentNode.right) {
+        currentNode = currentNode.right;
+      } else if (bit === spaceSymbol) {
+        // Replace the space symbol with a space character
+        decodedText += ' ';
+        continue;
+      }
+  
+      if (!currentNode.left && !currentNode.right) {
+        decodedText += currentNode.character;
+        currentNode = root;
+      }
+    }
+  
+    return decodedText;
+  }
+  
+  
+
+
+  function buildTreeFromCodeTable(codeTable: CodeTable): TreeNode {
+    const root = new TreeNode('', 0);
+    for (const [char, code] of Object.entries(codeTable)) {
+      let currentNode = root;
+      for (const bit of code) {
+        if (bit === '0') {
+          if (!currentNode.left) {
+            currentNode.left = new TreeNode('', 0);
+          }
+          currentNode = currentNode.left;
+        } else if (bit === '1') {
+          if (!currentNode.right) {
+            currentNode.right = new TreeNode('', 0);
+          }
+          currentNode = currentNode.right;
+        }
+      }
+      currentNode.character = char;
+    }
+    return root;
+  }
+  
+  
+  
+
+//command line arguments for compression and decompression
+if (process.argv.length < 4) {
+  console.error('Usage: node script.js <operation> <inputFileName>');
   process.exit(1);
 }
 
-//get the filename from the cli
-const filename = process.argv[2]; 
-console.log(filename)
-const frequencyMap = countCharFrequency(filename);
-const root = buildTree(frequencyMap);
-const codeTable = generateCodeTable(root);
-const outputFileName = `compressed-${filename}`
-console.log(outputFileName)
-const headerSection = WriteHeaderSection(outputFileName, codeTable);
+// Get the operation (compress or decompress)
+const operation = process.argv[2].toLowerCase();
+const inputFile = process.argv[3];
 
-if (!headerSection) {
-  console.error('Failed to write the header.');
-} else {
-  const encodedData = encodeText(filename, codeTable);
-  console.log(encodedData, headerSection)
+if (operation === 'compress') {
+  console.log('Compression operation selected.');
+  console.log(`Compressing ${inputFile}`)
+
+  const filename = inputFile
+  const text = fs.readFileSync(filename, 'utf-8');
+  const frequencyMap = countCharFrequency(filename);
+  const root = buildTree(frequencyMap);
+  const codeTable = generateCodeTable(root);
+  const outputFileName = `compressed-${filename}`
+
+  const encodedData = encodeText(text, codeTable);
+  
+  // Write the header and encoded data to the output file
+  WriteHeaderSection(outputFileName, codeTable);
   writeCompressedText(outputFileName, encodedData);
 
   console.log('Compression completed successfully.');
+
+} else if (operation === 'decompress') {
+  console.log('Decompression operation selected.');
+  console.log(`Decompressing ${inputFile}`);
+  const inputFileName = inputFile;
+  const codeTable = readHeader(inputFileName);
+
+  if (codeTable !== null) {
+    console.log('Header read successfully.');
+    const spaceSymbol = codeTable['SPACE'];
+    const root = buildTreeFromCodeTable(codeTable);
+
+    const compressedData = fs.readFileSync(inputFileName, 'utf-8');
+   
+    const decodedText = decodeData(compressedData, root, spaceSymbol);
+
+    const outputFileName = 'decompressed-sample.txt';
+    fs.writeFileSync(outputFileName, decodedText);
+    console.log("Decompression successful!");
+  } else {
+    console.error('Failed to decompress file.');
+  }
+} else {
+  console.error('Invalid operation. Please use "compress" or "decompress".');
+  process.exit(1);
 }
-
-
-// for (const [char, frequency] of frequencyMap.entries()) {
-//   console.log(`Character: ${char}, Frequency: ${frequency}`);
-// }
