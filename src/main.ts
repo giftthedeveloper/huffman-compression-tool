@@ -31,7 +31,7 @@ import { encodeAndCompress, decompressAndDecode } from './huffman';
 
 // Command-line argument handling here
 if (process.argv.length < 4) {
-  console.error('Usage: node script.js <operation> <inputFileName>');
+  console.error('Usage: node main.js <operation> <inputFileName>');
   process.exit(1);
 }
 
